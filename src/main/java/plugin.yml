@@ -2,7 +2,8 @@ author: Rutr
 description: Easier method to set the groups of players
 main: pl.azpal.azrank.AZRank
 name: AZRank
-version: 1.1.1
+version: 1.1.2
+softdepend: [PermissionsEx, bPermissions, GroupManager]
 commands:
   setrank:
     description: Sets the rank of a user
@@ -24,6 +25,7 @@ commands:
     description: display a list of user having temp group
     usage: "Usage: /<command> <player>"
     aliases: [players]
+#  azextend:
 permissions:
   azrank.*:
     description: Allows permission to all SetRankPEX features
