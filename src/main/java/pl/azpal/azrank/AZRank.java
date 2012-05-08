@@ -47,7 +47,7 @@ public class AZRank extends JavaPlugin{
 	protected int taskID;
 	private TimeRankChecker checker;
 	private int checkDelay=10*20;
-	private int checkInterval=10*20;
+	//private int checkInterval=10*20;
 	private String INFO_NODE = "azrank.info";
 	private String RESTORE_NODE = "azrank.restore";
 	private String LIST_NODE = "azrank.list";
@@ -66,7 +66,7 @@ public class AZRank extends JavaPlugin{
 		dLoad();
 		
 		checker = new TimeRankChecker(this);
-		taskID = getServer().getScheduler().scheduleSyncRepeatingTask(this, checker, checkDelay, checkInterval);
+		taskID = getServer().getScheduler().scheduleSyncRepeatingTask(this, checker, checkDelay, cfg.checkInterval);
 		
 		PluginDescriptionFile pdffile = this.getDescription();
 
@@ -164,6 +164,8 @@ public class AZRank extends JavaPlugin{
 				if (hasReload(player) || (cfg.allowOpsChanges && player.isOp())) {
 					if(dLoad()) {  // jeżeli dobrze przeładowano
 						cs.sendMessage(ChatColor.GREEN + "[AZRank] " + pdffile.getFullName() + " was succesfully reloaded");
+                                                getServer().getScheduler().cancelTask(taskID);
+                                                taskID = getServer().getScheduler().scheduleSyncRepeatingTask(this, checker, checkDelay, cfg.checkInterval);
 						log.info("[AZRank] " + pdffile.getFullName() + " was succesfully reloaded");
 					} else {  //jeżeli błąd podczas przeładowywania
 						cs.sendMessage(ChatColor.GREEN + "[AZRank] " + pdffile.getFullName() + " - Error when reloading");
@@ -173,6 +175,8 @@ public class AZRank extends JavaPlugin{
 				}
 			} else {
 				if(dLoad()) {  // jeżeli dobrze przeładowano
+                                        getServer().getScheduler().cancelTask(taskID);
+                                        taskID = getServer().getScheduler().scheduleSyncRepeatingTask(this, checker, checkDelay, cfg.checkInterval);
 					log.info("[AZRank] " + pdffile.getFullName() + " was succesfully reloaded");
 				} else {  //jeżeli błąd podczas przeładowywania
 					cs.sendMessage(ChatColor.GREEN + "[AZRank] " + pdffile.getFullName() + " - Error when reloading");

@@ -16,6 +16,7 @@ public class Cfg {
 	public boolean broadcastRankChange = true;
 	public boolean allowOpsChanges = true;
 	public boolean logEverything = false;
+        public int checkInterval=10*20;
 	
 	protected Cfg(AZRank plugin) {
         this.plugin = plugin;
@@ -44,6 +45,7 @@ public class Cfg {
     	broadcastRankChange = config.getBoolean("broadcastRankChange", broadcastRankChange);
     	allowOpsChanges = config.getBoolean("allowOpsChanges", allowOpsChanges);
         logEverything = config.getBoolean("logEverything", logEverything);
+        checkInterval=20*config.getInt("checkInterval", checkInterval/20);
         
         plugin.log.info("[AZRank][Config]option: 'message' is: " + message);
         plugin.log.info("[AZRank][Config]option: 'aWhile' is: " + aWhile);
@@ -51,6 +53,7 @@ public class Cfg {
         plugin.log.info("[AZRank][Config]option: 'broadcastRankChange' is: " + broadcastRankChange);
         plugin.log.info("[AZRank][Config]option: 'allowOpsChanges' is: " + allowOpsChanges);
         plugin.log.info("[AZRank][Config]option: 'logEverything' is: " + logEverything);
+        plugin.log.info("[AZRank][Config]option: 'checkInterval' is: " + (checkInterval/20) + "seconds");
         return true;
     }
 
@@ -61,6 +64,7 @@ public class Cfg {
     	config.set("broadcastRankChange", broadcastRankChange);
     	config.set("allowOpsChanges", allowOpsChanges);
         config.set("logEverything", logEverything);
+        config.set("checkInterval", checkInterval/20);
 
         try {
 			config.save(plugin.yml);
@@ -105,7 +109,16 @@ public class Cfg {
             config.set("logEverything", logEverything);
             hasChanged = true;
             plugin.debugmsg("Fixing 'logEverything' cfg");}
+        if (config.get("checkInterval") == null) {
+            config.set("checkInterval", checkInterval/20);
+            hasChanged = true;
+            plugin.debugmsg("Fixing 'checkInterval' cfg");}
+        else if (config.getInt("checkInterval")<1) {
+            config.set("checkInterval", checkInterval/20);
+            hasChanged = true;
+            plugin.debugmsg("Fixing 'checkInterval' cfg");}
 
+         
         if (hasChanged) {
             //plugin.logIt("the config has been updated :D");
             try {
