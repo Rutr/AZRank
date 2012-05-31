@@ -27,22 +27,36 @@ public class AZVaultAdapter extends AZPermissionsHandler{
     }
  
     @Override
-    public String[] getPlayersGroups(Player player){
-        return pp.getPlayerGroups(player);
+    public String[] getPlayersGroups(String player){
+        return pp.getPlayerGroups(plugin.getServer().getWorlds().get(0).getName(), player);
                
     }
     
-    public void setPlayersGroups(Player player, String[] groups){
-        String[] oldGroups=pp.getPlayerGroups(player);
+    public boolean setPlayersGroups(String player, String[] groups){
+        String world=plugin.getServer().getWorlds().get(0).getName();
+        String[] oldGroups=pp.getPlayerGroups(world,player);
+        int i=0;
         for(String group : oldGroups)
         {
-            pp.playerRemoveGroup(player, group);
+            if(!pp.playerRemoveGroup(world,player, group))
+                plugin.debugmsg("i cant remove group: "+ group + " from player: "+player+" in world: "+ world);
+            else
+                i++;
         }
+        int j=0;
         for(String group : groups)
         {
-            pp.playerAddGroup(player, group);
+            if(!pp.playerAddGroup(world,player, group))
+                plugin.debugmsg("i cant add group: "+ group + " to player: "+player+" in world: "+ world);
+            else
+                j++;
         }
-        
+        if(i==0 || j==0){
+            plugin.debugmsg("removed: "+i+"/"+oldGroups.length+ " added: "+j+"/"+groups.length);
+            return false;
+        }
+        plugin.debugmsg("removed: "+i+"/"+oldGroups.length+ " added: "+j+"/"+groups.length);
+        return true;
     }
     
 }

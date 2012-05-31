@@ -18,23 +18,19 @@ public abstract class AZPermissionsHandler {
     
     public abstract String getName();
  
-    public String[] getPlayersGroups(String playerName){
-        return getPlayersGroups(plugin.getServer().getPlayer(playerName));
-    }
+    public abstract String[] getPlayersGroups(String playerName);
     
     
     public String[] getPlayersGroups(Player player){
         return getPlayersGroups(player.getName());
     }
     
-    public void setPlayersGroups(String playerName, String[] groups)
-    {
-        setPlayersGroups(plugin.getServer().getPlayer(playerName),groups);
-    }
+    public abstract boolean setPlayersGroups(String playerName, String[] groups);
+
     
-    public void setPlayersGroups(Player player, String[] groups)
+    public boolean setPlayersGroups(Player player, String[] groups)
     {
-        setPlayersGroups(player.getName(),groups);
+        return setPlayersGroups(player.getName(),groups);
     }
     
     public String getPlayersGroupsAsString(String playerName) {
