@@ -13,6 +13,7 @@ import pl.azpal.azrank.AZRank;
  *
  * @author Rutr <artuczapl at gmail.com>
  */
+@Deprecated
 public class AZGroupManagerBridge extends AZPermissionsHandler{
     
     private WorldsHolder holder;
