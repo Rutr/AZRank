@@ -4,8 +4,6 @@ package pl.azpal.azrank;
  * @author Rutr <artuczapl at gmail.com>
  */
 
-import de.bananaco.bpermissions.imp.Permissions;
-import java.util.logging.Level;
 import pl.azpal.azrank.permissions.*;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -17,21 +15,16 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import net.milkbowl.vault.permission.Permission;
-import org.anjocaido.groupmanager.GroupManager;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import pl.azpal.azrank.Metrics.Graph;
-import ru.tehkode.permissions.bukkit.PermissionsEx;
 
 public class AZRank extends JavaPlugin{
 	protected final YamlConfiguration database = new YamlConfiguration();
@@ -109,41 +102,8 @@ public class AZRank extends JavaPlugin{
 		log.info("[AZRank] " + pdffile.getName() + " is now disabled.");
 	}
 	
-        /*public byte usage(String plugin){
-            if(plugin.equalsIgnoreCase(permPlg))
-                return 1;
-            else return 0;
-        }*/
         
 	private void setupPermissions() {
-            //Deprecated:
-            /*final PluginManager pluginManager = getServer().getPluginManager();
-            final Plugin pexPlugin = pluginManager.getPlugin("PermissionsEx");
-            final Plugin GMplugin = pluginManager.getPlugin("GroupManager");
-            final Plugin bPplugin = pluginManager.getPlugin("bPermissions");
-
-            if(pexPlugin!=null) {
-                    log.info("[AZRank] Found " + ((PermissionsEx)pexPlugin).getDescription().getFullName() + " and is good to go");
-                    //permBridge = new AZPEXBridge(PermissionsEx.getPermissionManager());
-                    permPlg="PEX";
-                    permtype=1;
-            } else if(GMplugin != null && GMplugin.isEnabled()) {
-                    //permBridge = new AZGroupManagerBridge(((GroupManager)GMplugin).getWorldsHolder(), this);
-                    log.info("[AZRank] Found " + ((GroupManager)GMplugin).getDescription().getFullName() + " and is good to go");
-                    permPlg="GM";
-                    permtype=2;
-            } else if(bPplugin != null && bPplugin.isEnabled()) {
-                    //permBridge = new AZbPermissionsBridge(this);
-                    log.info("[AZRank] Found " + ((Permissions)bPplugin).getDescription().getFullName() + " and is good to go");
-                    permPlg="bP";
-                    permtype=3;
-            } else {
-                    log.info("[AZRank] Permissions not detected");
-                    //this.setEnabled(false);
-                    //cancelE = true;
-                    permPlg="_other";
-                    //return;
-            }*/
             RegisteredServiceProvider<Permission> permissionProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.permission.Permission.class);
             if (permissionProvider != null)
             {
@@ -361,20 +321,23 @@ public class AZRank extends JavaPlugin{
     		save(cs);
 			
             }
-            setGroup(Name,Group);
-            String message = cfg.message;
-            message = message.replace("+player", Name);
-            message = message.replace("+group", Group);
-            if(time>0) {
-                message = message.replace("+time", cfg.aWhile);
+            if(setGroup(Name,Group)){
+                String message = cfg.message;
+                message = message.replace("+player", Name);
+                message = message.replace("+group", Group);
+                if(time>0) {
+                    message = message.replace("+time", cfg.aWhile);
+                } else {
+                    message = message.replace("+time", cfg.ever);
+                }
+                message = message.replace("&", "�");
+                if (cfg.broadcastRankChange) {
+                    getServer().broadcastMessage(ChatColor.YELLOW + "[AZRank] " + ChatColor.BLUE + message);
+                } else {
+                    cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.BLUE + message);
+                }
             } else {
-                message = message.replace("+time", cfg.ever);
-            }
-            message = message.replace("&", "�");
-            if (cfg.broadcastRankChange) {
-                getServer().broadcastMessage(ChatColor.YELLOW + "[AZRank] " + ChatColor.BLUE + message);
-            } else {
-                cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.BLUE + message);
+                cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "Error when setting group!");
             }
         }
 
@@ -413,13 +376,8 @@ public class AZRank extends JavaPlugin{
                             debugmsg("Asking for setRank perm for user: "+player.getName()+" - allowed - he is Op ");
                             return true;
                         } else if(player.hasPermission("azrank.setrank.*") || player.hasPermission("azrank.*")) {
-                            if(player.hasPermission("-azrank.setrank." + group.toLowerCase())) {
-                                debugmsg("Asking for setRank perm for user: "+player.getName()+"  and he has overwritten netive perm for this group! - false");
-                                return false;
-                            } else{
-                                debugmsg("Asking for -azrank.setrank." + group.toLowerCase() + "  perm for user: "+player.getName()+"  and he has permissions for all groups! - true");
-                                return true;
-                            }
+                            debugmsg("Asking for -azrank.setrank." + group.toLowerCase() + "  perm for user: "+player.getName()+"  and he has permissions for all groups! - true");
+                            return true;
                         } else {
                             String node = "azrank.setrank." + group.toLowerCase();
                             boolean czy = player.hasPermission(node);
@@ -433,7 +391,7 @@ public class AZRank extends JavaPlugin{
 			return false;
 		}	
 	}
-	
+
 	public boolean hasReload(Player player) {
 		try {
                     String node = "azrank.reload";
@@ -446,25 +404,27 @@ public class AZRank extends JavaPlugin{
 		
 	}
 	
-	
-	public void setGroups(String name, String[] oldGroups) {
+	@Deprecated
+	public boolean setGroups(String name, String[] oldGroups) {
 		try {
-                    permBridge.setPlayersGroups(name, oldGroups);
+                    return permBridge.setPlayersGroups(name, oldGroups);
 		} catch(Exception e) {
                     log.severe("[AZRank][ERROR]" + e.getMessage());
+                    return false;
 		}
 	}
-	
-	public void setGroup(String name, String group) {
+	@Deprecated
+	public boolean setGroup(String name, String group) {
 		try {
                     String[] groups ={group};
-                    permBridge.setPlayersGroups(name, groups);
+                    return permBridge.setPlayersGroups(name, groups);
 		} catch(Exception e) {
 			log.severe("[AZRank][ERROR]" + e.getMessage());
-
+                        return false;
 		}
 	}
-	
+        
+	@Deprecated
 	public String[] getGroups(String name){
 		try {
                     return permBridge.getPlayersGroups(name);
