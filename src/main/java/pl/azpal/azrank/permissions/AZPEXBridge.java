@@ -10,6 +10,7 @@ import ru.tehkode.permissions.PermissionManager;
  *
  * @author Rutr <artuczapl at gmail.com>
  */
+@Deprecated
 public class AZPEXBridge extends AZPermissionsHandler {
     
     public static PermissionManager pex;
