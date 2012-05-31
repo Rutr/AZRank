@@ -5,6 +5,7 @@
 package pl.azpal.azrank.permissions;
 
 import java.util.List;
+import org.bukkit.entity.Player;
 import pl.azpal.azrank.AZRank;
 
 /**
@@ -17,12 +18,44 @@ public abstract class AZPermissionsHandler {
     
     public abstract String getName();
  
-    public abstract String[] getPlayersGroups(String playerName);
+    public String[] getPlayersGroups(String playerName){
+        return getPlayersGroups(plugin.getServer().getPlayer(playerName));
+    }
     
-    public abstract void setPlayersGroups(String playerName, String[] groups);
+    
+    public String[] getPlayersGroups(Player player){
+        return getPlayersGroups(player.getName());
+    }
+    
+    public void setPlayersGroups(String playerName, String[] groups)
+    {
+        setPlayersGroups(plugin.getServer().getPlayer(playerName),groups);
+    }
+    
+    public void setPlayersGroups(Player player, String[] groups)
+    {
+        setPlayersGroups(player.getName(),groups);
+    }
     
     public String getPlayersGroupsAsString(String playerName) {
-        String[] groupsArray = getPlayersGroups(playerName);
+        try {
+            String[] groupsArray = getPlayersGroups(playerName);
+            String groups="[";
+            if (groupsArray.length > 0) {
+                groups = groups+ groupsArray[0];    // start with the first element
+                for (int i=1; i<groupsArray.length; i++) {
+                    groups = groups + ", " + groupsArray[i];
+                }
+            }
+            groups = groups +"]";
+            return groups;
+        }catch(NullPointerException e){
+            return "[]";
+        }
+    }
+ 
+    public String getPlayersGroupsAsString(Player player) {
+        String[] groupsArray = getPlayersGroups(player);
         String groups="[";
         if (groupsArray.length > 0) {
             groups = groups+ groupsArray[0];    // start with the first element
@@ -33,6 +66,5 @@ public abstract class AZPermissionsHandler {
         groups = groups +"]";
         return groups;
     }
-    
     
 }
