@@ -4,6 +4,7 @@ import java.util.Calendar;
 import java.util.List;
 
 
+import java.util.Set;
 import org.bukkit.configuration.ConfigurationSection;
 
 //import ru.tehkode.permissions.PermissionGroup;
@@ -27,7 +28,9 @@ class TimeRankChecker implements Runnable {
 			
 
 			if (usersSection != null) {
-				for (String userName : usersSection.getKeys(false)) {
+                                Set<String> usersNames = usersSection.getKeys(false);
+                                plugin.tempranks=usersNames.size();
+				for (String userName : usersNames) {
 					//users.add(plugin.getUser(userName));
 					plugin.debugmsg("Checking user: " + userName);
 					long to = plugin.database.getLong("users." + userName + ".to");
