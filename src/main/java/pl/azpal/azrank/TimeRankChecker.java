@@ -48,15 +48,17 @@ class TimeRankChecker implements Runnable {
 								}
 								//AZRank.pex.getUser(userName).setGroups(groups);*/
 								try{
-									plugin.setGroups(userName, groups);
+                                                                    if(plugin.setGroups(userName, groups)){
+                                                                        plugin.log.info("[AZRank] unranked user " + userName + " to group(s) " + oldGroups);
+                                                                        plugin.database.set("users." + userName, null);
+                                                                        plugin.save();
+                                                                    } else {
+                                                                        plugin.log.severe("[AZRank][ERROR]" + "Permissions Manger didnt changed groups.\nYou should manualy remove groups in permissions manager, and later in database.yml");
+                                                                    }
 								} catch (Exception e) {
 									plugin.log.severe("[AZRank][ERROR]" + e.getMessage());
 								}
-								
-								
-								plugin.log.info("[AZRank] unranked user " + userName + " to group(s) " + oldGroups);
-								plugin.database.set("users." + userName, null);
-								plugin.save();
+	
 							} else {
 								plugin.log.severe("[AZRank] Failed to unrank user " + userName + "! He haven't 'oldGroups'");
 								plugin.database.set("users." + userName, null);
