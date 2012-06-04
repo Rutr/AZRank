@@ -2,8 +2,8 @@ author: Rutr
 description: Easier method to set the groups of players
 main: pl.azpal.azrank.AZRank
 name: AZRank
-version: 1.2.2
-depend: Vault
+version: 1.2.3
+depend: [Vault]
 commands:
   azrank:
     description: Gets info about player or Sets the rank of a user

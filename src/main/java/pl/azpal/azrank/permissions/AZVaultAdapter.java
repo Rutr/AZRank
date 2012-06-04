@@ -28,34 +28,32 @@ public class AZVaultAdapter extends AZPermissionsHandler{
  
     @Override
     public String[] getPlayersGroups(String player){
-        return pp.getPlayerGroups(plugin.getServer().getWorlds().get(0).getName(), player);
+        return pp.getPlayerGroups((String) null, player);
                
     }
     
     public boolean setPlayersGroups(String player, String[] groups){
-        String world=plugin.getServer().getWorlds().get(0).getName();
-        String[] oldGroups=pp.getPlayerGroups(world,player);
+        String[] oldGroups=pp.getPlayerGroups((String) null,player);
         int i=0;
         for(String group : oldGroups)
         {
-            if(!pp.playerRemoveGroup(world,player, group))
-                plugin.debugmsg("i cant remove group: "+ group + " from player: "+player+" in world: "+ world);
+            if(!pp.playerRemoveGroup((String) null,player, group))
+                plugin.debugmsg("i cant remove group: "+ group + " from player: "+player);
             else
                 i++;
         }
         int j=0;
         for(String group : groups)
         {
-            if(!pp.playerAddGroup(world,player, group))
-                plugin.debugmsg("i cant add group: "+ group + " to player: "+player+" in world: "+ world);
+            if(!pp.playerAddGroup((String) null,player, group))
+                plugin.debugmsg("i cant add group: "+ group + " to player: "+player);
             else
                 j++;
         }
+        plugin.debugmsg("removed: "+i+"/"+oldGroups.length+ " added: "+j+"/"+groups.length);
         if(i==0 || j==0){
-            plugin.debugmsg("removed: "+i+"/"+oldGroups.length+ " added: "+j+"/"+groups.length);
             return false;
         }
-        plugin.debugmsg("removed: "+i+"/"+oldGroups.length+ " added: "+j+"/"+groups.length);
         return true;
     }
     

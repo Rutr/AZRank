@@ -86,7 +86,12 @@ public class AZRank extends JavaPlugin{
                             return tempranks;
                         }
                     });
-                    
+                    Metrics.Graph versions = metrics.createGraph("AZRank version");
+                    versions.addPlotter(new Metrics.Plotter(getDescription().getVersion()){
+                        public int getValue(){
+                            return 1;
+                        }
+                    });
                     metrics.start();
                 } catch (IOException e) {
                     // Failed to submit the stats :-(
