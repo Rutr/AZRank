@@ -414,19 +414,15 @@ public class AZRank extends JavaPlugin{
 		try {
                     return permBridge.setPlayersGroups(name, oldGroups);
 		} catch(Exception e) {
-                    log.severe("[AZRank][ERROR]" + e.getMessage());
+                    log.severe("[AZRank][Exception]when setting group|" + e.getMessage());
+                    e.printStackTrace();
                     return false;
 		}
 	}
 	@Deprecated
 	public boolean setGroup(String name, String group) {
-		try {
-                    String[] groups ={group};
-                    return permBridge.setPlayersGroups(name, groups);
-		} catch(Exception e) {
-			log.severe("[AZRank][ERROR]" + e.getMessage());
-                        return false;
-		}
+            String[] groups ={group};
+            return setGroups(name,groups);
 	}
         
 	@Deprecated

@@ -2,7 +2,7 @@ author: Rutr
 description: Easier method to set the groups of players
 main: pl.azpal.azrank.AZRank
 name: AZRank
-version: 1.2.3
+version: 1.2.4
 depend: [Vault]
 commands:
   azrank:

@@ -53,10 +53,19 @@ class TimeRankChecker implements Runnable {
                                                                         plugin.database.set("users." + userName, null);
                                                                         plugin.save();
                                                                     } else {
-                                                                        plugin.log.severe("[AZRank][ERROR]" + "Permissions Manger didnt changed groups.\nYou should manualy remove groups in permissions manager, and later in database.yml");
+                                                                        String oldGroupsS="[";
+                                                                        if (oldGroups.size() > 0) {
+                                                                            oldGroupsS += oldGroups.get(0);    // start with the first element
+                                                                            for (int i=1; i<oldGroups.size(); i++) {
+                                                                                oldGroupsS += ", " + oldGroups.get(i);
+                                                                            }
+                                                                        }
+                                                                        oldGroupsS+="]";
+                                                                        plugin.log.severe("[AZRank][ERROR]F " + "Failed to restore group for "+userName+" to "+oldGroupsS+".\nYou should manualy retore player groups in permissions manager, and later in database.yml");
                                                                     }
 								} catch (Exception e) {
-									plugin.log.severe("[AZRank][ERROR]" + e.getMessage());
+									plugin.log.severe("[AZRank][ERROR]E " + e.getMessage());
+                                                                        e.printStackTrace();
 								}
 	
 							} else {

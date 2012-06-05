@@ -22,19 +22,17 @@ public class Cfg {
         this.plugin = plugin;
     }
 
+    @SuppressWarnings("CallToThreadDumpStack")
     protected boolean loadConfig() {
         try {
 			config.load(plugin.yml);
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return false;
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return false;
 		} catch (InvalidConfigurationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return false;
 		}

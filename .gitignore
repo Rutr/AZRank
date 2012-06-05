@@ -1,2 +1,4 @@
 /target/
 /nbproject/private/
+/build/
+/dist/
