@@ -28,11 +28,16 @@ public class AZVaultAdapter extends AZPermissionsHandler{
  
     @Override
     public String[] getPlayersGroups(String player){
-        String[] groups = pp.getPlayerGroups((String) null, player);
+        String[] groups=null;
+        String defaultWorld=plugin.getServer().getWorlds().get(0).getName();
+        try {
+            groups=pp.getPlayerGroups((String) null,player);
+        } catch (NullPointerException e){
+            groups=pp.getPlayerGroups(defaultWorld,player);
+        }
         if(groups == null)
         {
-            String world=plugin.getServer().getWorlds().get(0).getName();
-            return pp.getPlayerGroups(world, player);
+            return pp.getPlayerGroups(defaultWorld, player);
         }
         else
             return groups;
@@ -40,12 +45,18 @@ public class AZVaultAdapter extends AZPermissionsHandler{
     }
     
     public boolean setPlayersGroups(String player, String[] groups){
-        String[] oldGroups=pp.getPlayerGroups((String) null,player);
-        int i=0;
+        String[] oldGroups=null;
         String defaultWorld=plugin.getServer().getWorlds().get(0).getName();
+        int i=0;
+        
+        try {
+            oldGroups=pp.getPlayerGroups((String) null,player);
+        } catch (NullPointerException e){
+            oldGroups=pp.getPlayerGroups(defaultWorld,player);
+        }
+        
         if(oldGroups==null)
-        { //to backward compatybility
-            
+        { //to backward compatybility 
             oldGroups=pp.getPlayerGroups(defaultWorld,player);
         }
         for(String group : oldGroups)
