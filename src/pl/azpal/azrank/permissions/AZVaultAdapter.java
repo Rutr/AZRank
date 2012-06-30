@@ -22,6 +22,7 @@ public class AZVaultAdapter extends AZPermissionsHandler{
         this.pp = pp;
     }
     
+    @Override
     public String getName() {
         return(pp.getName());
     }
@@ -38,12 +39,14 @@ public class AZVaultAdapter extends AZPermissionsHandler{
         if(groups == null)
         {
             return pp.getPlayerGroups(defaultWorld, player);
+            //pp.
         }
         else
             return groups;
                
     }
     
+    @Override
     public boolean setPlayersGroups(String player, String[] groups){
         String[] oldGroups=null;
         String defaultWorld=plugin.getServer().getWorlds().get(0).getName();
@@ -56,7 +59,7 @@ public class AZVaultAdapter extends AZPermissionsHandler{
         }
         
         if(oldGroups==null)
-        { //to backward compatybility 
+        { //to GroupManager compatybility 
             oldGroups=pp.getPlayerGroups(defaultWorld,player);
         }
         for(String group : oldGroups)

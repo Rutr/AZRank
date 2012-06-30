@@ -1,14 +1,26 @@
 author: Rutr
-description: Easier method to set the groups of players
+description: Give groups for specified time
 main: pl.azpal.azrank.AZRank
 name: AZRank
-version: 1.2.5
-depend: [Vault]
+version: 1.3.b1
+softdepend: [Vault,PermissionsEx]
 commands:
-  azrank:
-    description: Gets info about player or Sets the rank of a user
-    usage: "Usage: /<command> <player> [group] [time]"
-    aliases: [rank, rankset, setgroup, player, setrank]
+  azplayer:
+    description: List player groups
+    usage: "Usage: /<command> <player>"
+    aliases: [azrank]
+  azsetgroup:
+    description: Set <player> groups to <group> for [time] or permanently
+    usage: "Usage: /<command> <player> <group> [[-s] time]"
+    aliases: [azsetrank]
+  azaddgroup:
+    description: Add <player> to <group> for [time] or permanently
+    usage: "Usage: /<command> <player> <group> [[-s] time]"
+    aliases: [azaddrank]
+  azremgroup:
+    description: Remove <player> from <group>
+    usage: "Usage: /<command> <player> <group>"
+    aliases: [azremrank,azremovegroup,azremoverank]
   azrankreload:
     description: Reloads SetRankPEX
     usage: "Usage: /<command>"
@@ -24,7 +36,7 @@ commands:
   azextend:
     description: prolongs the duration of the rank
     usage: "Usage: /<command> <player> [group] <time>"
-    aliases: [ezext, extendrank, azprolong]
+    aliases: [azext]
 permissions:
   azrank.*:
     description: Allows permission to all SetRankPEX features

@@ -108,4 +108,16 @@ public abstract class Util {
 		}
 		return c.getTimeInMillis();
 	}
+
+        public static String tableToString(String[] tbl){
+            String wynik="[";
+            if(tbl.length > 0){
+                wynik+=tbl[0];
+                for(int i=1;i<tbl.length;i++){
+                    wynik+=","+tbl[i];
+                }
+            }
+            wynik+="]";
+            return wynik;
+        }
 }
