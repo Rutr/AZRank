@@ -11,10 +11,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.logging.Logger;
 
 import net.milkbowl.vault.permission.Permission;
@@ -27,9 +29,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import pl.azpal.azrank.manager.AZPlayersGroup;
+import pl.azpal.azrank.manager.ComparatorByPlayerAndTimeEnd;
 
 
-public class AZRank extends JavaPlugin{
+public class AZRank extends JavaPlugin {
 	protected final YamlConfiguration database = new YamlConfiguration();
 	protected Cfg cfg = new Cfg(this);
         
@@ -54,12 +58,10 @@ public class AZRank extends JavaPlugin{
 	private static final String LIST_NODE = "azrank.list";
         private static final String ALL_NODE = "azrank.*";
         Metrics metrics;
-    /**
-     * @param args the command line arguments
-     */
+
+        
         @Override
 	public void onEnable() {
-               
 		setupPermissions();
 		if (cancelE == true) {
 			return;
@@ -73,8 +75,8 @@ public class AZRank extends JavaPlugin{
 		taskID = getServer().getScheduler().scheduleAsyncRepeatingTask(this, checker, checkDelay, cfg.checkInterval);
 		
 		PluginDescriptionFile pdffile = this.getDescription();
-
-		log.info("[AZRank] "+ pdffile.getFullName() + " is now enabled.");
+                
+                log.info("[AZRank] "+ pdffile.getFullName() + " is now enabled.");
                 try {
                     metrics = new Metrics(this);
                     Metrics.Graph pp = metrics.createGraph("Permissions plugins");
@@ -148,6 +150,7 @@ public class AZRank extends JavaPlugin{
 	
     @Override
 	public boolean onCommand(CommandSender cs, Command cmd, String alias, String[] args) {
+        
 
             if (cmd.getName().equalsIgnoreCase("azplayer")) {
                 if(args.length > 0){
@@ -162,7 +165,39 @@ public class AZRank extends JavaPlugin{
                 } else
                     sayTooFewArgs(cs,1);
                 
-                
+            
+            }else if (cmd.getName().equalsIgnoreCase("azrankreload")) {
+                if (args.length > 0) {
+                        sayTooManyArgs(cs, 0);
+                }
+                PluginDescriptionFile pdffile = this.getDescription();
+                if (cs instanceof Player) {
+                        Player player = (Player)cs;
+                        if (hasReload(player) || (cfg.allowOpsChanges && player.isOp())) {
+                                if(dLoad()) {  // jeżeli dobrze przeładowano
+                                        cs.sendMessage(ChatColor.GREEN + "[AZRank] " + pdffile.getFullName() + " was succesfully reloaded");
+                                        getServer().getScheduler().cancelTask(taskID);
+                                        taskID = getServer().getScheduler().scheduleAsyncRepeatingTask(this, checker, checkDelay, cfg.checkInterval);
+                                        log.info("[AZRank] " + pdffile.getFullName() + " was succesfully reloaded");
+                                } else {  //jeżeli błąd podczas przeładowywania
+                                        cs.sendMessage(ChatColor.GREEN + "[AZRank] " + pdffile.getFullName() + " - Error when reloading");
+                                }
+                        } else {
+                                cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "You do not have permission to do this!" );
+                        }
+                } else {
+                        if(dLoad()) {  // jeżeli dobrze przeładowano
+                                getServer().getScheduler().cancelTask(taskID);
+                                taskID = getServer().getScheduler().scheduleAsyncRepeatingTask(this, checker, checkDelay, cfg.checkInterval);
+                                log.info("[AZRank] " + pdffile.getFullName() + " was succesfully reloaded");
+                        } else {  //jeżeli błąd podczas przeładowywania
+                                cs.sendMessage(ChatColor.GREEN + "[AZRank] " + pdffile.getFullName() + " - Error when reloading");
+                        }
+                }
+                return true;
+		
+		
+            
             } else if (cmd.getName().equalsIgnoreCase("azsetgroup")) {
                 if(args.length < 2) {
                     sayTooFewArgs(cs, 2);
@@ -173,7 +208,8 @@ public class AZRank extends JavaPlugin{
                     if(args.length > 4)
                         sayTooManyArgs(cs, 4);
                     try {
-                        czas = Util.parseDateDiff(args[args.length-1], true);
+                        //czas = Util.parseDateDiff(args[args.length-1], true);
+                        czas = Util.parseTimeDiffInMillis(args[args.length-1]);
                         }
                     catch (Exception e) {
                         cs.sendMessage(ChatColor.RED + "[AZRank] Error - " + e.getMessage());
@@ -185,79 +221,168 @@ public class AZRank extends JavaPlugin{
                     if(!SetRank(cs, args[0], new String[]{ args[1]}, czas,args[args.length-2].equalsIgnoreCase("-s")))
                     {
                         cs.sendMessage(ChatColor.GREEN + "[AZRank]"+ChatColor.RED +"An error occurred when tried to set group!");
-                        debugmsg("Error when tried to set group "+args[0] + " to " + args[1] + " time: "+czas);
+                        debugmsg("Error when tried to set group "+args[0] + " to " + args[1] + " time: "+czas/1000+"seconds");
                     }
                     else
                         return true;
                 } //else 
                   //  sayNoPerm(cs);
                 
-            }
-            
-            
-		/*if (cmd.getName().equalsIgnoreCase("azrank")) {
-                    if(args.length == 1){
-                        if(hasPerm(cs, INFO_NODE))
-                            return infoCMD(cs,args[0]);
-                        else {
-                            sayNoPerm(cs);
-                            return true;
+            }else if (cmd.getName().equalsIgnoreCase("azaddgroup"))
+            {
+                if(args.length<2)
+                {
+                    sayTooFewArgs(cs,2);
+                    return false;
+                }
+                long czas=-1;
+                if(args.length>2)
+                {
+                    if(args.length > 4)
+                        sayTooManyArgs(cs, 4);
+                    try {
+                        czas = Util.parseTimeDiffInMillis(args[args.length-1]);
                         }
-                    } else if(args.length>1 && args.length<4) {
-                        long czas = -1;
-			if (args.length == 3) {
-                            try {
-                                czas = Util.parseDateDiff(args[2], true);
-                            }
-                            catch (Exception e) {
-                                cs.sendMessage(ChatColor.RED + "[AZRank] Error - " + e.getMessage());
-                            }
-			}
-                        
-                        if(hasSetRank(cs, args[1])) {
-                            SetRank(cs, args[0], args[1], czas);  
-                        } else 
-                            sayNoPerm(cs);
+                    catch (Exception e) {
+                        cs.sendMessage(ChatColor.RED + "[AZRank] Error - " + e.getMessage());
+                        e.printStackTrace();
+                        return false;
+                    }
+                }
+                if(canSetRank(cs, args[0],args[1]))
+                {
+                    if(!playerAddTmpGroup(cs, args[0], new String[]{ args[1]}, czas,args[args.length-2].equalsIgnoreCase("-s")))
+                    {
+                        cs.sendMessage(ChatColor.GREEN + "[AZRank]"+ChatColor.RED +"An error occurred when tried to add group!");
+                        debugmsg("Error when tried to add group "+args[0] + " to " + args[1] + " time: "+czas);
+                    }
+                    else
                         return true;
-
-                    }//end dla argumentnów 2 lub 3
-                    //jeżeli zla ilosc argumentow:
-                    else {
-                        sayBadArgs(cs);
+                }
+                
+                
+            }
+            else if (cmd.getName().equalsIgnoreCase("azremovegroup"))
+            {
+                if(args.length==2){
+                    if(canSetRank(cs, args[0], args[1]))
+                    {
+                        if(permBridge.playerRemoveGroups(args[0],new String[] {args[1]} ))
+                        {
+                            if(database.getConfigurationSection("users."+args[0]+"."+args[1])!=null)
+                            {
+                                database.set("users."+args[0]+"."+args[1],null);
+                            }
+                            cs.sendMessage(ChatColor.GREEN + "[AZRank]"+ChatColor.AQUA +" Successful removed "+args[0] + " from " + args[1] + "!");
+                            debugmsg("successful removed group "+args[0] + " from " + args[1]);
+                            return true;
+                        } else
+                        {
+                            cs.sendMessage(ChatColor.GREEN + "[AZRank]"+ChatColor.RED +"An error occurred when tried to remove group!");
+                            debugmsg("Error when tried to remove group "+args[0] + " from " + args[1]);
+                            return false;
+                        }
+                        
+                    }else
+                    {
+                        sayNoPerm(cs);
+                        return false;
+                    }
+                }
+                else if(args.length<2){
+                    sayTooFewArgs(cs,2);
+                    return false;
+                }
+                else if(args.length>2){
+                    sayTooManyArgs(cs,2);
+                    return false;
+                }
+                
+                
+                
+            }
+            else if (cmd.getName().equalsIgnoreCase("azranks"))
+            {
+                if(cs instanceof Player)
+                {
+                    if(! hasPerm(cs, LIST_NODE))
+                    {
+                        sayNoPerm(cs);
+                        return false;
+                    }
+                    //wypisywanie jezeli gracz 
+                    if(args.length>0)
+                    {
+                        try {
+                            int page = Integer.parseInt(args[0]);
+                            if(page<1) throw new NumberFormatException("Number must be positive!");
+                            wypiszGraczy(cs,10,page);
+                            return true;
+                        } catch(NumberFormatException e) {
+                            cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "Error! Invalid page number!" + e.getMessage());
+                            return false;
+                        }
+                    } else {
+                        wypiszGraczy(cs,10,1);
+                        return true;
+                    }
+                } else
+                { //wypisywanie jeżeli konsola
+                    wypiszGraczy(cs,0,0);
+                    return true;
+                }
+                
+            }else if (cmd.getName().equalsIgnoreCase("azextend"))
+            {
+                //TODO: extension all temp groups time
+                if(args.length != 3)
+                {
+                    if(args.length < 3)
+                        sayTooFewArgs(cs, 3);
+                    else
+                        sayTooManyArgs(cs, 3);
+                    return false;
+                }
+                long interval;
+                try {
+                    interval = Util.parseTimeDiffInMillis(args[args.length-1]);
+                    }
+                catch (Exception e) {
+                    cs.sendMessage(ChatColor.RED + "[AZRank] Invalid time format - " + e.getMessage());
+                    e.printStackTrace();
+                    return false;
+                }
+                if(canSetRank(cs, args[0], args[1]))
+                {
+                    ConfigurationSection groupSection = database.getConfigurationSection("users."+args[0]+"."+args[1]);
+                    if(groupSection==null)
+                    {
+                        cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "Player isnt in that group temporary");
+                        return false;
+                    }
+                    long to=groupSection.getLong("to");
+                    if(to>0)
+                    {
+                        groupSection.set("to",to + interval);
+                        save(cs);
+                        cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.AQUA + "Successful prolonged duration "+args[0]+ " in "+args[1]);
+                        debugmsg("Successful prolonged duration "+args[0]+ " in "+args[1]);
+                        return true;
+                    } else
+                    {
+                        cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "Invalid end time for "+args[0]+ " in "+args[1]+"! Deleting!");
+                        database.set("users."+args[0]+"."+args[1], null);
+                        save(cs);
+                        debugmsg("Invalid end time for "+args[0]+ " in "+args[1]+"! Deleted!");
                         return false;
                     }
                     
                     
-			
-		}else if (cmd.getName().equalsIgnoreCase("azrankreload")) {
-			if (args.length > 0) {
-				return false;
-			}
-			PluginDescriptionFile pdffile = this.getDescription();
-			if (cs instanceof Player) {
-				Player player = (Player)cs;
-				if (hasReload(player) || (cfg.allowOpsChanges && player.isOp())) {
-					if(dLoad()) {  // jeżeli dobrze przeładowano
-						cs.sendMessage(ChatColor.GREEN + "[AZRank] " + pdffile.getFullName() + " was succesfully reloaded");
-                                                getServer().getScheduler().cancelTask(taskID);
-                                                taskID = getServer().getScheduler().scheduleSyncRepeatingTask(this, checker, checkDelay, cfg.checkInterval);
-						log.info("[AZRank] " + pdffile.getFullName() + " was succesfully reloaded");
-					} else {  //jeżeli błąd podczas przeładowywania
-						cs.sendMessage(ChatColor.GREEN + "[AZRank] " + pdffile.getFullName() + " - Error when reloading");
-					}
-				} else {
-					cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "You do not have permission to do this!" );
-				}
-			} else {
-				if(dLoad()) {  // jeżeli dobrze przeładowano
-                                        getServer().getScheduler().cancelTask(taskID);
-                                        taskID = getServer().getScheduler().scheduleSyncRepeatingTask(this, checker, checkDelay, cfg.checkInterval);
-					log.info("[AZRank] " + pdffile.getFullName() + " was succesfully reloaded");
-				} else {  //jeżeli błąd podczas przeładowywania
-					cs.sendMessage(ChatColor.GREEN + "[AZRank] " + pdffile.getFullName() + " - Error when reloading");
-				}
-			}
-			return true;
+                }
+            }
+            
+            
+		/*
 		
 		} else if (cmd.getName().equalsIgnoreCase("restoregroup")) {
                     if(cs instanceof Player) {
@@ -346,10 +471,13 @@ public class AZRank extends JavaPlugin{
                 }*/
 		return false;
 	}
-	
-	public void sayNoPerm(CommandSender cs){
-		cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "You do not have permission to do this!" );
-	}
+    /**
+     * Say "You do not have permission to do this!"
+     * @param cs CommandSender to which is send message
+     */
+    public void sayNoPerm(CommandSender cs){
+            cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "You do not have permission to do this!" );
+    }
         @Deprecated
 	public void sayBadArgs(CommandSender cs){
 		cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "Bad amount of args!" );
@@ -358,113 +486,135 @@ public class AZRank extends JavaPlugin{
 	public void sayBadArgs(CommandSender cs,int a){
 		cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "Bad amount of args! Expected "+ a );
 	}
+    /**
+     * Say "Too many arguments!"
+     * @param cs CommandSender to which is send message
+     */
+    public void sayTooManyArgs(CommandSender cs){
+        cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "Too many arguments!");
+    }
+    /**
+     * Say "Too many arguments!"
+     * @param cs CommandSender to which is send message
+     * @param a maximum amount of parameters thad expected
+     */
+    public void sayTooManyArgs(CommandSender cs,int a){
+        cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "Too many arguments! Expected maximum " + a );
+    }
+    public void sayTooFewArgs(CommandSender cs){
+        cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "Too few arguments!");
+    }
+    public void sayTooFewArgs(CommandSender cs,int a){
+        cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "Too few arguments! Expected minimum " + a );
+    }
         
-	public void sayTooManyArgs(CommandSender cs){
-            cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "Too many arguments!");
-	}
-        public void sayTooManyArgs(CommandSender cs,int a){
-            cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "Too many arguments! Expected maximum " + a );
-	}
-        public void sayTooFewArgs(CommandSender cs){
-            cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "Too few arguments!");
-	}
-        public void sayTooFewArgs(CommandSender cs,int a){
-            cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "Too few arguments! Expected minimum " + a );
-	}
-        
-        
-        public boolean SetRank(CommandSender cs, String Player, String[] groups, long time,boolean set){
-            ConfigurationSection usersSection = database.getConfigurationSection("users."+Player);
-            if(time <= 0L) {
-                if(usersSection!=null){
-                    debugmsg("Clearing database for user "+Player+". Setting group to "+ Util.tableToString(groups)+" permanently ...");
-                    database.set("users." + Player, null);
-                    
-                }
-                if(permBridge.setPlayersGroups(Player, groups))
-                {
-                    debugmsg("Seted group "+ Player + " to "+Util.tableToString(groups) + " permanently.");
-                    cs.sendMessage(ChatColor.AQUA + "[AZRank]"+ChatColor.AQUA + " Successful moved "+ Player + " to " + Util.tableToString(groups) + " forever!");
-                    return true;
-                }
-                debugmsg("Permissions plugin dont Set group "+ Player + " to "+Util.tableToString(groups) + " (permanently)");
-                return false;
+        //TODO: przenieść do API / move to API
+    /**
+     * Set rank. If player already is in only given groups and set is false, time will be prolonged.
+     * @param cs Messages output
+     * @param Player player to change his groups
+     * @param groups new groups to set to the player
+     * @param timeDiff the duration of give groups
+     * @param set if true, time will be set, else if already player is in only give groups, time will be prolonged
+     */
+    @Deprecated
+    public boolean SetRank(CommandSender cs, String Player, String[] groups, long timeDiff ,boolean set){
+        ConfigurationSection usersSection = database.getConfigurationSection("users."+Player);
+        if(timeDiff <= 0L) {
+            if(usersSection!=null){
+                debugmsg("Clearing database for user "+Player+". Setting group to "+ Util.tableToString(groups)+" permanently ...");
+                database.set("users." + Player, null);
+                save(cs);
+
             }
-            else //tymczasowa
+            if(permBridge.setPlayersGroups(Player, groups))
             {
-                String[] oldGroups = permBridge.getPlayersGroups(Player);
-                if(Arrays.equals(groups, oldGroups)) //jeżeli jest już w tych grupach
+                debugmsg("Seted group "+ Player + " to "+Util.tableToString(groups) + " permanently.");
+                cs.sendMessage(ChatColor.AQUA + "[AZRank]"+ChatColor.AQUA + " Successful moved "+ Player + " to " + Util.tableToString(groups) + " forever!");
+                return true;
+            }
+            debugmsg("Permissions plugin dont Set group "+ Player + " to "+Util.tableToString(groups) + " (permanently)");
+            return false;
+        }
+        else //tymczasowa
+        {
+            String[] oldGroups = permBridge.getPlayersGroups(Player);
+            if(Arrays.equals(groups, oldGroups)) //jeżeli jest już w tych grupach
+            {
+                //TODO: multi check
+                // debugmsg
+                int i=0;
+                java.util.Date now = new java.util.Date();
+                ConfigurationSection groupSection = database.getConfigurationSection("users."+Player+"."+groups[i]);
+                long timeTo=groupSection.getLong("to");
+                if(groupSection!=null && !set && timeTo>0) { //has temporiary and without -s flag (adding time)
+                    //TODO: add adding time
+                    timeTo += timeDiff;
+                    cs.sendMessage(ChatColor.GREEN + "[AZRank]"+ChatColor.AQUA + " Adding some time for "+ Player + " to be in " + Util.tableToString(groups) );
+                } else
                 {
-                    //TODO: multi check
-                    // debugmsg
-                    int i=0;
-                    ConfigurationSection groupSection = database.getConfigurationSection("users."+Player+"."+groups[i]);
-                    if(groupSection!=null && !set) { //has temporiary and without -s flag (adding time)
-                        //TODO: add adding time
-                        //time = Util parse time + database.get
-                        cs.sendMessage(ChatColor.GREEN + "[AZRank]"+ChatColor.AQUA + " Adding some time for "+ Player + " to be in " + Util.tableToString(groups) );
-                    } else
-                        cs.sendMessage(ChatColor.GREEN + "[AZRank]"+ChatColor.AQUA + " Setting new time for "+ Player + " to be in " + Util.tableToString(groups) );
-                    
-                    {//updateing database
-                        java.util.Date now = new java.util.Date();
-                        database.set("users." + Player + "."+groups[i] + ".from", now.getTime());
-                        database.set("users." + Player + "."+groups[i] + ".to", time );
-                        save(cs);
-                        debugmsg("Successful seted new time for "+Player + " to be in "+ Util.tableToString(groups) );
-                    }
-                    return true;
+                    cs.sendMessage(ChatColor.GREEN + "[AZRank]"+ChatColor.AQUA + " Setting new time for "+ Player + " to be in " + Util.tableToString(groups) );
+                    timeTo=now.getTime()+timeDiff;
                 }
-                else //inne grupy niż ma
+
+                {//updateing database
+                    database.set("users." + Player + "."+groups[i] + ".from", now.getTime());
+                    database.set("users." + Player + "."+groups[i] + ".to", timeTo );
+                    save(cs);
+                    debugmsg("Successful seted new time for "+Player + " to be in "+ Util.tableToString(groups) );
+                }
+                return true;
+            }
+            else //inne grupy niż ma
+            {
+                //TODO: debug msgs to this:
+                List<String> restoreGroups = new LinkedList<String>();
+                for(String oldGroup : oldGroups)
                 {
-                    //TODO: debug msgs to this:
-                    List<String> restoreGroups = new LinkedList<String>();
-                    for(String oldGroup : oldGroups)
+                    if(database.getConfigurationSection("users."+Player+"."+oldGroup)!=null)//jeżeli są dane grupy(to tymczasowa)
                     {
-                        if(database.getConfigurationSection("users."+Player+"."+oldGroup)!=null)//jeżeli są dane grupy(to tymczasowa)
+                        List<String> rg=(List<String>)database.getList("users."+Player+"."+oldGroup+".restoreGroups");
+                        if(rg!=null) //jeżeli jakieś są to dodaj je do nowej listy
                         {
-                            List<String> rg=(List<String>)database.getList("users."+Player+"."+oldGroup+".restoreGroups");
-                            if(rg!=null) //jeżeli jakieś są to dodaj je do nowej listy
-                            {
-                                Iterator<String> it = rg.iterator();
-                                String next;
-                                while(it.hasNext()){
-                                    next =it.next();
-                                    if(!restoreGroups.contains(next))
-                                        restoreGroups.add(next);
-                                }
+                            Iterator<String> it = rg.iterator();
+                            String next;
+                            while(it.hasNext()){
+                                next =it.next();
+                                if(!restoreGroups.contains(next))
+                                    restoreGroups.add(next);
                             }
                         }
-                        else
-                            restoreGroups.add(oldGroup);
-                    }
-                    debugmsg("Generated list of groups to restore: "+ Util.tableToString(restoreGroups.toArray(new String[]{})));
-                    if(permBridge.setPlayersGroups(Player, groups))
-                    { //jeżeli pomyślnie ustawiono nowe grupy
-                        //TODO: obsługe wyjątków
-                        database.set("users." + Player , null);
-                        for(String group:groups)
-                        {
-                            java.util.Date now = new java.util.Date();
-                            database.set("users."+Player+"."+group+".restoreGroups",restoreGroups);
-                            database.set("users."+Player+"."+group+".from", now.getTime());
-                            database.set("users."+Player+"."+group+".to",time);
-                        }
-                        cs.sendMessage(ChatColor.GREEN + "[AZRank]"+ChatColor.AQUA + " Moved "+ Player + " to " + Util.tableToString(groups) + " to " + time);
-                        debugmsg("Seted group of "+Player +" to "+Util.tableToString(groups)+" to "+ time);
-                        save(cs);
-                        return true;
                     }
                     else
-                    { //błąd
-                        cs.sendMessage(ChatColor.RED+"Błąd! Nie udało się zmienić grupy!");
-                        debugmsg("Permissions adapter return false for: ("+Player +","+Util.tableToString(groups)+")");
-                        return false;
-                    }  
+                        restoreGroups.add(oldGroup);
+                }
+                debugmsg("Generated list of groups to restore: "+ Util.tableToString(restoreGroups.toArray(new String[]{})));
+                if(permBridge.setPlayersGroups(Player, groups))
+                { //jeżeli pomyślnie ustawiono nowe grupy
+                    //TODO: obsługe wyjątków
+                    database.set("users." + Player , null);
+                    java.util.Date now = new java.util.Date();
+                    for(String group:groups)
+                    {
+                        database.set("users."+Player+"."+group+".restoreGroups",restoreGroups);
+                        database.set("users."+Player+"."+group+".from", now.getTime());
+                        database.set("users."+Player+"."+group+".to",now.getTime() + timeDiff);
+                    }
+                    cs.sendMessage(ChatColor.GREEN + "[AZRank]"+ChatColor.AQUA + " Moved "+ Player + " to " + Util.tableToString(groups) + " to " + now.getTime() + timeDiff);
+                    debugmsg("Seted group of "+Player +" to "+Util.tableToString(groups)+" to "+ now.getTime() + timeDiff);
+                    save(cs);
+                    return true;
+                }
+                else
+                { //błąd
+                    cs.sendMessage(ChatColor.RED+"Błąd! Nie udało się zmienić grupy!");
+                    debugmsg("Permissions adapter return false for: ("+Player +","+Util.tableToString(groups)+")");
+                    return false;
                 }  
-            }        
-            //return false;
-        }
+            }  
+        }        
+        //return false;
+    }
 	/*public void SetRank(CommandSender cs, String Name, String Group, long time) {
             ConfigurationSection usersSection = database.getConfigurationSection("users."+Name);
             if(time <= 0L) {
@@ -499,6 +649,100 @@ public class AZRank extends JavaPlugin{
                 cs.sendMessage(ChatColor.GREEN + "[AZRank] " + ChatColor.RED + "Error when setting group!");
             }
         }*/
+    public boolean playerAddTmpGroup(CommandSender cs, String Player, String[] groups, long timeDiff, boolean set) {
+        ConfigurationSection usersSection = database.getConfigurationSection("users."+Player);
+        if(timeDiff <= 0L) {
+            for(String group:groups)
+            {
+                usersSection.set(group,null);
+            }
+            save(cs);
+            if(permBridge.playerAddGroups(Player, groups))
+            {
+                debugmsg("Added "+ Player + " to "+Util.tableToString(groups) + " permanently.");
+                cs.sendMessage(ChatColor.AQUA + "[AZRank]"+ChatColor.AQUA + " Successful add "+ Player + " to " + Util.tableToString(groups) + " forever!");
+                return true;
+            }
+            debugmsg("Permissions plugin dont added "+ Player + " to "+Util.tableToString(groups) + " (permanently)");
+            return false;
+        }
+        else //tymczasowa
+        {
+            String[] oldGroups = permBridge.getPlayersGroups(Player);
+            boolean czy=false;
+            boolean znaleziono;
+            if(groups.length>0)
+                czy=true;
+            for(String group:groups)
+            {
+                znaleziono=false;
+                for(String cg: oldGroups){
+                    if(cg.equalsIgnoreCase(group)){
+                        znaleziono=true;
+                        break;
+                    }
+                }
+                if(!znaleziono){
+                    czy=false;
+                    break;
+                }
+            }
+            if(czy) //jeżeli jest już w tych grupach
+            {
+                //TODO: multi check
+                // debugmsg
+                int i=0;
+                ConfigurationSection groupSection = database.getConfigurationSection("users."+Player+"."+groups[i]);
+                java.util.Date now = new java.util.Date();
+                long timeTo=groupSection.getLong("to");
+                    
+                if(groupSection!=null && !set && timeTo>0) { //has temporiary and without -s flag (adding time)
+                    //TODO: add adding time
+                    timeTo += timeDiff;
+                    //time = Util parse time + database.get
+                    cs.sendMessage(ChatColor.GREEN + "[AZRank]"+ChatColor.AQUA + " Adding some time for "+ Player + " to be in " + Util.tableToString(groups) );
+                } else
+                {
+                    timeTo=timeDiff+now.getTime();
+                    cs.sendMessage(ChatColor.GREEN + "[AZRank]"+ChatColor.AQUA + " Setting new time for "+ Player + " to be in " + Util.tableToString(groups) );
+                }
+                
+                {//updateing database
+                    //database.set("users." + Player + "."+groups[i] + ".from", now.getTime());
+                    database.set("users." + Player + "."+groups[i] + ".to", timeTo );
+                    save(cs);
+                    debugmsg("Successful seted new time for "+Player + " to be in "+ Util.tableToString(groups) );
+                }
+                return true;
+            }
+            else //inne grupy niż ma
+            {
+                //TODO: debug msgs to this:
+                //TODO: dla każdej grupy osobno sprawdzanie czy w niej już jest!
+                if(permBridge.playerAddGroups(Player, groups))
+                { //jeżeli pomyślnie ustawiono nowe grupy
+                    //TODO: obsługe wyjątków
+                    java.util.Date now = new java.util.Date();
+                    for(String group:groups)
+                    {
+                        //TODo sprawdzanie czy już jest i nie dodawanie '.from'
+                        database.set("users."+Player+"."+group+".from", now.getTime());
+                        database.set("users."+Player+"."+group+".to",now.getTime()+timeDiff);  
+                    }
+                    cs.sendMessage(ChatColor.GREEN + "[AZRank]"+ChatColor.AQUA + " Added "+ Player + " to " + Util.tableToString(groups) + " to " + now.getTime()+timeDiff);
+                    debugmsg("Added "+Player +" to "+Util.tableToString(groups)+" to "+ now.getTime()+timeDiff);
+                    save(cs);
+                    return true;
+                }
+                else
+                { //błąd
+                    cs.sendMessage(ChatColor.RED+"Błąd! Nie udało się zmienić grupy!");
+                    debugmsg("Permissions adapter return false for: add ("+Player +","+Util.tableToString(groups)+")");
+                    return false;
+                }  
+            }  
+        }        
+    }
 
 	public void save() {
 		try {
@@ -613,7 +857,72 @@ public class AZRank extends JavaPlugin{
 
 
     public void wypiszGraczy(CommandSender cs, int count, int page) {
-        ConfigurationSection usersSection = database.getConfigurationSection("users");
+        try
+        {
+            List<AZPlayersGroup> tempGroups = new LinkedList();
+            ConfigurationSection usersSection=database.getConfigurationSection("users");
+            ConfigurationSection userSection;
+            Set<String> players=usersSection.getKeys(false);
+            AZPlayersGroup group;
+            List<String> restoreGroups;
+            for(String playerName:players)
+            {
+                userSection=usersSection.getConfigurationSection(playerName);
+                for(String groupName:userSection.getKeys(false))
+                {
+                    restoreGroups=userSection.getStringList(groupName+".restoreGroups");
+                    if(restoreGroups.size()>0)
+                        group = new AZPlayersGroup(playerName,groupName,userSection.getLong(groupName+".from"),userSection.getLong(groupName+".to"), restoreGroups.toArray(new String[]{}) );
+                    else
+                        group = new AZPlayersGroup(playerName,groupName,userSection.getLong(groupName+".from"),userSection.getLong(groupName+".to"));
+                    
+                    tempGroups.add(group);
+                }
+            }
+            Collections.sort(tempGroups,new ComparatorByPlayerAndTimeEnd());
+            
+            int pages;
+            int min,max;
+            SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd HH:mm zzz");
+            java.util.Date toDate = new java.util.Date();
+            dateformat.setTimeZone(cfg.timeZone);
+            
+            if(count>0)
+            {
+                if(tempGroups.size()>0)
+                    pages = 1 + tempGroups.size() / count;
+                else
+                    pages=0;
+                min = (page-1)*10;
+                max = page*10;
+                if(max>=tempGroups.size())
+                    max=tempGroups.size()-1;
+                cs.sendMessage(ChatColor.RED + "===Temporiary ranks: == PAGE: " + page +"/"+pages+"====");
+            } else
+            {
+                min=0;
+                max=tempGroups.size();
+                cs.sendMessage(ChatColor.RED + "===Temporiary ranks: == " + max+ " ====");
+            }
+            
+            
+            for(int i=min;i<max;i++)
+            {
+                group=tempGroups.get(i);
+                toDate.setTime(group.to);
+                String rg="";
+                if(group.restoreGroups.length>0)
+                    rg=", later in " + Util.tableToString(group.restoreGroups);
+                cs.sendMessage("" + (i+1) + ". " + group.playerName + " in: " + group.groupName + " to: " +dateformat.format(toDate)+rg);
+            }
+        } catch(OutOfMemoryError e){
+            cs.sendMessage(ChatColor.RED + "Out of memory error! send ticket on dev.bukkit.org/server-mods/azrank");
+        }
+        
+        
+        
+        
+        /*ConfigurationSection usersSection = database.getConfigurationSection("users");
         if(usersSection!=null){
             String[] users = usersSection.getKeys(false).toArray(new String[0]);
             int pages = users.length/count;
@@ -624,24 +933,24 @@ public class AZRank extends JavaPlugin{
             }
         } else {
             cs.sendMessage(ChatColor.RED + "No users!");
-        }
+        }*/
         
         
     }
 
-    private String wypiszGracza(String user) {
+    /*private String wypiszGracza(String user) {
         String groups=permBridge.getPlayersGroupsAsString(user);
         long to = database.getLong("users." + user + ".to");
         SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         java.util.Date toDate = new java.util.Date(to);
         List<String> oldGroups = database.getStringList("users." + user + ".oldRanks");
         return user + ChatColor.RED +groups + ChatColor.WHITE + " to: " + ChatColor.YELLOW + dateformat.format(toDate) + ChatColor.WHITE + ", next " + ChatColor.BLUE + oldGroups;
-    }
+    }*/
 
     private boolean hasPerm(CommandSender cs, String node) {
         if(cs instanceof Player){
             Player player = (Player)cs;
-            if(player.hasPermission(node) || player.hasPermission(ALL_NODE))
+            if(player.hasPermission(node) || player.hasPermission(ALL_NODE) || (player.isOp() && cfg.allowOpsChanges))
                 return true;
             else return false;
         } else
@@ -662,7 +971,7 @@ public class AZRank extends JavaPlugin{
             Set<String> keys=userSection.getKeys(false);
             if(keys.size()>0)
             {
-                msg+=ChatColor.YELLOW+" temporiary"+ChatColor.AQUA+": ";
+                msg+=ChatColor.YELLOW+" temporiary"+ChatColor.AQUA+":\n";
             }
             for(String group:keys)
             {
@@ -671,9 +980,9 @@ public class AZRank extends JavaPlugin{
                 toDate = new java.util.Date(to);
                 List<String> oldGroups = database.getStringList("users." + playername + "." + group + ".restoreGroups");
                 String rg ="";
-                if(oldGroups!=null)
+                if(oldGroups!=null && oldGroups.size()>0)
                     rg=ChatColor.AQUA+" later in: "+ChatColor.DARK_AQUA+oldGroups;
-                msg+=ChatColor.DARK_AQUA+ group + ChatColor.AQUA+" to " + ChatColor.DARK_AQUA+dateformat.format(toDate) +rg+ChatColor.RED + " | ";
+                msg+=ChatColor.DARK_AQUA+ group + ChatColor.AQUA+" to " + ChatColor.DARK_AQUA+dateformat.format(toDate) + rg + "\n";
                 
             }
             String pg="";
@@ -693,6 +1002,8 @@ public class AZRank extends JavaPlugin{
         }
         return true;
     }
+
+
 
 }
 

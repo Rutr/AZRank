@@ -2,40 +2,36 @@ author: Rutr
 description: Give groups for specified time
 main: pl.azpal.azrank.AZRank
 name: AZRank
-version: 1.3.b1
+version: 1.3.b2
 softdepend: [Vault,PermissionsEx]
 commands:
   azplayer:
     description: List player groups
     usage: "Usage: /<command> <player>"
-    aliases: [azrank]
+    aliases: [azrank,rank]
   azsetgroup:
     description: Set <player> groups to <group> for [time] or permanently
     usage: "Usage: /<command> <player> <group> [[-s] time]"
-    aliases: [azsetrank]
+    aliases: [azsetrank,setrank,setgroup]
   azaddgroup:
     description: Add <player> to <group> for [time] or permanently
     usage: "Usage: /<command> <player> <group> [[-s] time]"
-    aliases: [azaddrank]
-  azremgroup:
-    description: Remove <player> from <group>
-    usage: "Usage: /<command> <player> <group>"
-    aliases: [azremrank,azremovegroup,azremoverank]
+    aliases: [azaddrank,addrank,addgroup]
+  azremovegroup:
+    description: Remove <player> from <group>, type * to remove all temporiary groups.
+    usage: "Usage: /<command> <player> <group| *>"
+    aliases: [azremrank,azremgroup,azremoverank,removegroup,remgroup,removerank,remrank]
   azrankreload:
-    description: Reloads SetRankPEX
+    description: Reloads AZRank
     usage: "Usage: /<command>"
     aliases: [reloadazrank, rankreload, azrankreload]
-  restoregroup:
-    description: restores the previous group
-    usage: "Usage: /<command> <player>"
-    aliases: [unsetrank, ungroup, unrank]
   azranks:
     description: display a list of user having temp group
-    usage: "Usage: /<command> <player>"
-    aliases: [tempranks, tempgroups]
+    usage: "Usage: /<command> [page]"
+    aliases: [tempranks, tempgroups,ranks]
   azextend:
     description: prolongs the duration of the rank
-    usage: "Usage: /<command> <player> [group] <time>"
+    usage: "Usage: /<command> <player> <group> <time>"
     aliases: [azext]
 permissions:
   azrank.*:

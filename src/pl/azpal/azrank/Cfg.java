@@ -3,20 +3,22 @@ package pl.azpal.azrank;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import java.util.TimeZone;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 public class Cfg {
-	private AZRank plugin;
-	protected final YamlConfiguration config = new YamlConfiguration();
-	
-	public String message = "+player is now a(n) +group for+time";
-	public String aWhile = " a while";
-	public String ever =  "ever";
-	public boolean broadcastRankChange = true;
-	public boolean allowOpsChanges = true;
-	public boolean logEverything = false;
-        public int checkInterval=10*20;
+    private AZRank plugin;
+    protected final YamlConfiguration config = new YamlConfiguration();
+
+    public String message = "+player is now a(n) +group for+time";
+    public String aWhile = " a while";
+    public String ever =  "ever";
+    public boolean broadcastRankChange = true;
+    public boolean allowOpsChanges = true;
+    public boolean logEverything = false;
+    public int checkInterval=10*20;
+    public TimeZone timeZone = TimeZone.getDefault();
 	
 	protected Cfg(AZRank plugin) {
         this.plugin = plugin;
