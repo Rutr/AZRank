@@ -37,26 +37,33 @@ class TimeRankChecker implements Runnable {
                                             //TODO: usuwanie jak nie ma .to
                                             ConfigurationSection userSection = plugin.database.getConfigurationSection("users."+userName);
                                             Set<String> groups = userSection.getKeys(false);
-                                            for(String group:groups)
-                                            {
-                                                tempranks++;
-                                                to = plugin.database.getLong("users." + userName + "."+group+".to");
-                                                if(to < now)
+                                            
+                                            if(groups.size()>0){
+                                                for(String group:groups)
                                                 {
-                                                    List<String> restoreGroups = userSection.getStringList(group+".restoreGroups");
-                                                    if(restoreGroups!=null)
+                                                    tempranks++;
+                                                    to = plugin.database.getLong("users." + userName + "."+group+".to");
+                                                    if(to < now)
                                                     {
-                                                        plugin.permBridge.playerAddGroups(userName,restoreGroups.toArray(new String[]{}));
-                                                        for(String rGroup:restoreGroups)
+                                                        List<String> restoreGroups = userSection.getStringList(group+".restoreGroups");
+                                                        if(restoreGroups!=null)
                                                         {
-                                                            userSection.set(rGroup,null);
+                                                            plugin.permBridge.playerAddGroups(userName,restoreGroups.toArray(new String[]{}));
+                                                            for(String rGroup:restoreGroups)//usuwanie danych o grupach które mają zostać przywrócone.
+                                                            {
+                                                                userSection.set(rGroup,null);
+                                                            }
                                                         }
+                                                        plugin.permBridge.playerRemoveGroups(userName,new String[]{group});
+                                                        plugin.database.set("users." + userName + "."+group,null);
+                                                        plugin.save();
                                                     }
-                                                    plugin.permBridge.playerRemoveGroups(userName,new String[]{group});
-                                                    plugin.database.set("users." + userName + "."+group,null);
-                                                    plugin.save();
                                                 }
+                                            } else {
+                                                plugin.debugmsg(userName + " dont have any groups - deleting!");
+                                                usersSection.set(userName, null);
                                             }
+                                                
                                         }
                                         else {//capability with 1.2.5 and older versions
 						if(to < now) {

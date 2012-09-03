@@ -6,6 +6,7 @@ package pl.azpal.azrank.permissions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import org.bukkit.entity.Player;
@@ -75,10 +76,21 @@ public abstract class AZPermissionsHandler {
         return setPlayersGroups(userName, crGroups.toArray(new String[]{}));
     }
 
-    public boolean playerRemoveGroups(String userName, String[] groups) {
+    public synchronized boolean playerRemoveGroups(String userName, String[] groups) {
         List<String> crGroups = new ArrayList(Arrays.asList(getPlayersGroups(userName)));
         List<String> remGroups= Arrays.asList(groups);
-        crGroups.removeAll(remGroups);
+        //crGroups.removeAll(remGroups);
+        Iterator<String> iter = crGroups.iterator();
+        String crGroup;
+        while(iter.hasNext()){
+            crGroup=iter.next();
+            for(String remGroup:remGroups){
+                if(crGroup.equalsIgnoreCase(remGroup)){
+                    iter.remove();
+                    break;
+                }
+            }
+        }
         return setPlayersGroups(userName, crGroups.toArray(new String[]{}));
     }
     

@@ -973,16 +973,23 @@ public class AZRank extends JavaPlugin {
             {
                 msg+=ChatColor.YELLOW+" temporiary"+ChatColor.AQUA+":\n";
             }
-            for(String group:keys)
+            String dgroup;
+            for(String group:keys)//dla każdej grupy w bazie danych
             {
-                crGroups.remove(group);
+                dgroup=group;
+                for(String crGroup : crGroups) 
+                    if(crGroup.equalsIgnoreCase(group)){
+                        dgroup=crGroup;               
+                        crGroups.remove(crGroup);
+                        break;
+                    }
                 to = database.getLong("users." + playername + "."+group+".to");
                 toDate = new java.util.Date(to);
                 List<String> oldGroups = database.getStringList("users." + playername + "." + group + ".restoreGroups");
                 String rg ="";
                 if(oldGroups!=null && oldGroups.size()>0)
                     rg=ChatColor.AQUA+" later in: "+ChatColor.DARK_AQUA+oldGroups;
-                msg+=ChatColor.DARK_AQUA+ group + ChatColor.AQUA+" to " + ChatColor.DARK_AQUA+dateformat.format(toDate) + rg + "\n";
+                msg+=ChatColor.DARK_AQUA+ dgroup + ChatColor.AQUA+" to " + ChatColor.DARK_AQUA+dateformat.format(toDate) + rg + "\n";
                 
             }
             String pg="";
