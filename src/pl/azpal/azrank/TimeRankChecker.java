@@ -46,15 +46,21 @@ class TimeRankChecker implements Runnable {
                                                     if(to < now)
                                                     {
                                                         List<String> restoreGroups = userSection.getStringList(group+".restoreGroups");
+                                                        String world = userSection.getString(group+".world");
+                                                        if((world == null) || (world.equalsIgnoreCase("")))
+                                                        {
+                                                            world = plugin.getServer().getWorlds().get(0).getName();
+                                                        }
+                                                            
                                                         if(restoreGroups!=null)
                                                         {
-                                                            plugin.permBridge.playerAddGroups(userName,restoreGroups.toArray(new String[]{}));
+                                                            plugin.permBridge.playerAddGroups(userName,restoreGroups.toArray(new String[]{}), true, world);
                                                             for(String rGroup:restoreGroups)//usuwanie danych o grupach które mają zostać przywrócone.
                                                             {
                                                                 userSection.set(rGroup,null);
                                                             }
                                                         }
-                                                        plugin.permBridge.playerRemoveGroups(userName,new String[]{group});
+                                                        plugin.permBridge.playerRemoveGroups(userName,new String[]{group}, true, world);
                                                         plugin.database.set("users." + userName + "."+group,null);
                                                         plugin.save();
                                                     }
@@ -66,6 +72,7 @@ class TimeRankChecker implements Runnable {
                                                 
                                         }
                                         else {//capability with 1.2.5 and older versions
+                                                String world = plugin.getServer().getWorlds().get(0).getName();
 						if(to < now) {
 							List<String> oldGroups = plugin.database.getStringList("users." + userName + ".oldRanks");
                                                         
@@ -77,7 +84,7 @@ class TimeRankChecker implements Runnable {
 									plugin.debugmsg("Was in group: " + oldGroups.get(i) );
 								}
 								try{
-                                                                    if(plugin.setGroups(userName, groups)){
+                                                                    if(plugin.setGroups(userName, groups, true, world)){
                                                                         plugin.log.info("[AZRank] unranked user " + userName + " to group(s) " + oldGroups);
                                                                         plugin.database.set("users." + userName, null);
                                                                         plugin.save();
@@ -104,7 +111,7 @@ class TimeRankChecker implements Runnable {
 							}
 						} else {
 							plugin.debugmsg("Checked " + userName + " - converting to new system...");
-                                                        String[] crGroups = plugin.permBridge.getPlayersGroups(userName);
+                                                        String[] crGroups = plugin.permBridge.getPlayersGroups(userName, true, world);
                                                         ConfigurationSection userSection = plugin.database.getConfigurationSection("users."+userName);
                                                         for(String crGroup:crGroups)
                                                         {

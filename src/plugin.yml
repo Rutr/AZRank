@@ -2,8 +2,8 @@ author: Rutr
 description: Give groups for specified time
 main: pl.azpal.azrank.AZRank
 name: AZRank
-version: 1.3.b3
-softdepend: [Vault,PermissionsEx]
+version: 1.3.b4
+softdepend: [Vault,PermissionsEx,GroupManager]
 commands:
   azplayer:
     description: List player groups
