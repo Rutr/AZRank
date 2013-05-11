@@ -1,4 +1,4 @@
-package pl.azpal.azrank;
+package pl.rutr.minecraft.azrank;
 /*
  * Copyright 2011 Tyler Blair. All rights reserved.
  *

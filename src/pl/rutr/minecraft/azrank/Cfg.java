@@ -1,4 +1,4 @@
-package pl.azpal.azrank;
+package pl.rutr.minecraft.azrank;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -8,26 +8,30 @@ import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 public class Cfg {
+    public static final long MAX_CHECKING_INTERVAL=345600000L;//4 Days
+    
     private AZRank plugin;
     protected final YamlConfiguration config = new YamlConfiguration();
 
-    public String message = "+player is now a(n) +group for+time";
-    public String aWhile = " a while";
-    public String ever =  "ever";
+    public String message = "+player is now a(n) +group +time";
+    public String aWhile = "for a while";
+    public String ever =  "forever";
     public boolean broadcastRankChange = true;
     public boolean allowOpsChanges = true;
     public boolean logEverything = false;
     public int checkInterval=10*20;
+    public int updateInterval=12*60*60*20;
+    
     public TimeZone timeZone = TimeZone.getDefault();
 	
-	protected Cfg(AZRank plugin) {
+    protected Cfg(AZRank plugin) {
         this.plugin = plugin;
     }
 
     @SuppressWarnings("CallToThreadDumpStack")
     protected boolean loadConfig() {
         try {
-			config.load(plugin.yml);
+			config.load(plugin.cfgFile);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return false;
@@ -67,7 +71,7 @@ public class Cfg {
         config.set("checkInterval", checkInterval/20);
 
         try {
-			config.save(plugin.yml);
+			config.save(plugin.cfgFile);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -76,7 +80,7 @@ public class Cfg {
     protected void checkConfig() {
     	plugin.debugmsg("Checking CFG");
         try {
-			config.load(plugin.yml);
+			config.load(plugin.cfgFile);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -122,7 +126,7 @@ public class Cfg {
         if (hasChanged) {
             //plugin.logIt("the config has been updated :D");
             try {
-				config.save(plugin.yml);
+				config.save(plugin.cfgFile);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

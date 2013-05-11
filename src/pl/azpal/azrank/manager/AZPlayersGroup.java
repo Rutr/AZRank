@@ -1,13 +1,13 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package pl.azpal.azrank.manager;
 
 /**
  *
  * @author Rutr <artuczapl at gmail.com>
  */
+
+
+
 public class AZPlayersGroup {
     public String playerName;
     public String groupName;

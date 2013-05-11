@@ -1,23 +1,21 @@
 /*
  * TODO: globaly or not option.
  */
-package pl.azpal.azrank.permissions;
+package pl.rutr.minecraft.azrank.permissions;
 
 import net.milkbowl.vault.permission.Permission;
-import org.bukkit.entity.Player;
-import org.bukkit.plugin.RegisteredServiceProvider;
-import pl.azpal.azrank.AZRank;
+import pl.rutr.minecraft.azrank.AZRank;
 
 /**
  *
  * @author Rutr <artuczapl at gmail.com>
  */
-public class AZVaultAdapter extends AZPermissionsHandler{
+public class AZVaultAdapter extends PermissionsSysHandler{
     
-    public static Permission pp;
+    private Permission pp;
     
     public AZVaultAdapter(AZRank origin, Permission pp){
-        this.plugin=origin;
+        this.azrank=origin;
         this.pp = pp;
     }
     
@@ -27,7 +25,7 @@ public class AZVaultAdapter extends AZPermissionsHandler{
     }
  
     @Override
-    public String[] getPlayersGroups(String playerName, boolean globaly, String worldName){
+    public String[] getPlayersGroups(String playerName, String worldName, boolean globaly){
         String[] groups=null;
         //String defaultWorld=plugin.getServer().getWorlds().get(0).getName();
         try {
@@ -44,7 +42,7 @@ public class AZVaultAdapter extends AZPermissionsHandler{
     }
     
     @Override
-    public boolean setPlayersGroups(String player, String[] groups, boolean globaly, String worldName){
+    public boolean setPlayersGroups(String player, String[] groups, String worldName, boolean globaly){
         String[] oldGroups=null;
         //String defaultWorld=plugin.getServer().getWorlds().get(0).getName();
         int i=0;
@@ -68,9 +66,9 @@ public class AZVaultAdapter extends AZPermissionsHandler{
             if(!pp.playerRemoveGroup((String) null, player, group))
             {
                 if(!pp.playerRemoveGroup(worldName, player, group))
-                    plugin.debugmsg("Failed to remove group: "+ group + " from player: "+player);
+                    azrank.debugmsg("Failed to remove group: "+ group + " from player: "+player);
                 else{
-                    plugin.debugmsg("Globaly failed, Removed localy group: "+ group + " from player: "+player+" w:"+worldName);
+                    azrank.debugmsg("Globaly failed, Removed localy group: "+ group + " from player: "+player+" w:"+worldName);
                     i++;
                 }
             }
@@ -84,17 +82,17 @@ public class AZVaultAdapter extends AZPermissionsHandler{
             if(!pp.playerAddGroup((String) null,player, group))
             {
                 if(!pp.playerAddGroup(worldName,player, group))
-                    plugin.debugmsg("Failed to add group: "+ group + " to player: "+player);
+                    azrank.debugmsg("Failed to add group: "+ group + " to player: "+player);
                 else
                 {
-                    plugin.debugmsg("Globaly failed, Added localy group: "+ group + " from player: "+player+" w:"+worldName);
+                    azrank.debugmsg("Globaly failed, Added localy group: "+ group + " from player: "+player+" w:"+worldName);
                     j++;
                 }
             }
             else
                 j++;
         }
-        plugin.debugmsg("removed: "+i+"/"+oldGroups.length+ " added: "+j+"/"+groups.length);
+        azrank.debugmsg("removed: "+i+"/"+oldGroups.length+ " added: "+j+"/"+groups.length);
         if(i==0 || j==0){
             return false;
         }

@@ -1,4 +1,5 @@
-package pl.azpal.azrank.permissions;
+
+package pl.rutr.minecraft.azrank.permissions;
 
 /**
  *
@@ -13,19 +14,17 @@ import org.anjocaido.groupmanager.data.User;
 import org.anjocaido.groupmanager.dataholder.OverloadedWorldHolder;
 import org.anjocaido.groupmanager.dataholder.worlds.WorldsHolder;
 import org.anjocaido.groupmanager.permissions.AnjoPermissionsHandler;
-import pl.azpal.azrank.AZRank;
+import pl.rutr.minecraft.azrank.AZRank;
 
-/**
- *
- * @author Rutr <artuczapl at gmail.com>
- */
-public class AZGroupManagerAdapter extends AZPermissionsHandler{
+
+
+public class AZGroupManagerAdapter extends PermissionsSysHandler{
     
     private WorldsHolder holder;
     
     public AZGroupManagerAdapter(AZRank origin, WorldsHolder holder){
         this.holder=holder;
-        plugin=origin;
+        azrank=origin;
     }
     
     @Override
@@ -34,7 +33,7 @@ public class AZGroupManagerAdapter extends AZPermissionsHandler{
     }
  
     @Override
-    public String[] getPlayersGroups(String playerName, boolean globaly, String worldName){
+    public String[] getPlayersGroups(String playerName, String worldName, boolean globaly){
         AnjoPermissionsHandler handler = holder.getWorldPermissionsByPlayerName(playerName);
         
         if (handler == null)
@@ -46,7 +45,7 @@ public class AZGroupManagerAdapter extends AZPermissionsHandler{
     }
     
     @Override
-    public boolean setPlayersGroups(String playerName, String[] groups, boolean globaly, String worldName){
+    public boolean setPlayersGroups(String playerName, String[] groups, String worldName, boolean globaly){
         OverloadedWorldHolder handler = holder.getWorldDataByPlayerName(playerName);
         if (handler == null)
             handler = holder.getWorldData(worldName);
@@ -63,7 +62,7 @@ public class AZGroupManagerAdapter extends AZPermissionsHandler{
     }
     
     @Override
-    public boolean playerAddGroups(String playerName, String[] groups, boolean globaly, String worldName){
+    public boolean playerAddGroups(String playerName, String[] groups, String worldName, boolean globaly){
         OverloadedWorldHolder handler = holder.getWorldDataByPlayerName(playerName);
         if (handler == null)
             handler = holder.getWorldData(worldName);
@@ -78,15 +77,15 @@ public class AZGroupManagerAdapter extends AZPermissionsHandler{
     }
     
     @Override
-    public boolean playerRemoveGroups(String playerName, String[] groups, boolean globaly, String worldName){
+    public boolean playerRemoveGroups(String playerName, String[] groups, String worldName, boolean globaly){
         OverloadedWorldHolder handler = holder.getWorldDataByPlayerName(playerName);
         if (handler == null)
             handler = holder.getWorldData(worldName);
         if (handler == null) {
-            plugin.debugmsg("Failed to remove groups from player: " + playerName);
+            azrank.debugmsg("Failed to remove groups from player: " + playerName);
             return false;
         }
-        plugin.debugmsg("getName: "+ handler.getName());
+        azrank.debugmsg("getName: "+ handler.getName());
         User user = handler.getUser(playerName);
         String obecna = user.getGroupName();
         boolean czy=false;
@@ -127,7 +126,7 @@ public class AZGroupManagerAdapter extends AZPermissionsHandler{
         } else {
             for(int i=0;i<groups.length;i++){
                 if(!user.removeSubGroup(handler.getGroup(groups[i]))){
-                    plugin.debugmsg("Failed to remove group: "+ groups[i] + " from player: "+playerName);
+                    azrank.debugmsg("Failed to remove group: "+ groups[i] + " from player: "+playerName);
                     return false;
                 }
             }

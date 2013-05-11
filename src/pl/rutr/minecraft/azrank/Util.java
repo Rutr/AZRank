@@ -1,4 +1,4 @@
-package pl.azpal.azrank;
+package pl.rutr.minecraft.azrank;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -6,7 +6,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class Util {
-	//This is code from essentials plugin.
+    
+    //This is code from essentials plugin.
     public static long parseTimeDiffInMillis(String time) throws Exception
     {
         Pattern timePattern = Pattern.compile(
